@@ -117,10 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="MainForm_saveSelectedImageToolStripMenuItem_Click_Open_an_IFS_file_and_select_a_valid_image_first_" xml:space="preserve">
-    <value>Open an IFS file and select a valid image first.</value>
-  </data>
-  <data name="MainForm_Bemani_IFS_Explorer" xml:space="preserve">
-    <value>Bemani IFS Explorer</value>
-  </data>
 </root>

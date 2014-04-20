@@ -32,20 +32,24 @@
             this.pictureboxPreview = new System.Windows.Forms.PictureBox();
             this.labelStatus = new System.Windows.Forms.Label();
             this.updownIndexSelect = new System.Windows.Forms.NumericUpDown();
-            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.browseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saveSelectedImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutBemaniIFSExplorerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.pictureboxPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.updownIndexSelect)).BeginInit();
-            this.menuStrip1.SuspendLayout();
+            this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // openFileDialog
             // 
             this.openFileDialog.Filter = "IFS files|*.ifs";
+            this.openFileDialog.InitialDirectory = "C:\\LDJ\\data\\graphic";
             // 
             // listboxImages
             // 
@@ -69,7 +73,6 @@
             this.pictureboxPreview.Size = new System.Drawing.Size(518, 247);
             this.pictureboxPreview.TabIndex = 3;
             this.pictureboxPreview.TabStop = false;
-            this.pictureboxPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureboxPreview_Paint);
             // 
             // labelStatus
             // 
@@ -89,15 +92,16 @@
             this.updownIndexSelect.TabIndex = 5;
             this.updownIndexSelect.ValueChanged += new System.EventHandler(this.updownIndexSelect_ValueChanged);
             // 
-            // menuStrip1
+            // menuStrip
             // 
-            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(679, 24);
-            this.menuStrip1.TabIndex = 7;
-            this.menuStrip1.Text = "menuStrip";
+            this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.fileToolStripMenuItem,
+            this.helpToolStripMenuItem});
+            this.menuStrip.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip.Name = "menuStrip";
+            this.menuStrip.Size = new System.Drawing.Size(679, 24);
+            this.menuStrip.TabIndex = 7;
+            this.menuStrip.Text = "menuStrip";
             // 
             // fileToolStripMenuItem
             // 
@@ -139,6 +143,21 @@
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
+            // helpToolStripMenuItem
+            // 
+            this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.aboutBemaniIFSExplorerToolStripMenuItem});
+            this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.helpToolStripMenuItem.Text = "&Help";
+            // 
+            // aboutBemaniIFSExplorerToolStripMenuItem
+            // 
+            this.aboutBemaniIFSExplorerToolStripMenuItem.Name = "aboutBemaniIFSExplorerToolStripMenuItem";
+            this.aboutBemaniIFSExplorerToolStripMenuItem.Size = new System.Drawing.Size(213, 22);
+            this.aboutBemaniIFSExplorerToolStripMenuItem.Text = "&About Bemani IFS Explorer";
+            this.aboutBemaniIFSExplorerToolStripMenuItem.Click += new System.EventHandler(this.aboutBemaniIFSExplorerToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -148,17 +167,17 @@
             this.Controls.Add(this.labelStatus);
             this.Controls.Add(this.pictureboxPreview);
             this.Controls.Add(this.listboxImages);
-            this.Controls.Add(this.menuStrip1);
+            this.Controls.Add(this.menuStrip);
             this.DoubleBuffered = true;
-            this.MainMenuStrip = this.menuStrip1;
+            this.MainMenuStrip = this.menuStrip;
             this.Name = "MainForm";
-            this.Text = "Bemani IFS Extractor";
+            this.Text = "Bemani IFS Explorer";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.Load += new System.EventHandler(this.MainForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureboxPreview)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.updownIndexSelect)).EndInit();
-            this.menuStrip1.ResumeLayout(false);
-            this.menuStrip1.PerformLayout();
+            this.menuStrip.ResumeLayout(false);
+            this.menuStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -171,12 +190,15 @@
         private System.Windows.Forms.PictureBox pictureboxPreview;
         private System.Windows.Forms.Label labelStatus;
         private System.Windows.Forms.NumericUpDown updownIndexSelect;
-        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.MenuStrip menuStrip;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem browseToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saveSelectedImageToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
+        private System.Windows.Forms.SaveFileDialog saveFileDialog;
+        private System.Windows.Forms.ToolStripMenuItem helpToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem aboutBemaniIFSExplorerToolStripMenuItem;
     }
 }
 

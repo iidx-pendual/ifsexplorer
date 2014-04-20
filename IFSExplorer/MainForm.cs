@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
+using System.Linq;
+using IFSExplorer.Properties;
 
 namespace IFSExplorer
 {
@@ -25,6 +28,14 @@ namespace IFSExplorer
                 {906096, 10}
             };
 
+        private static readonly Tuple<string, string, ImageFormat>[] SaveFilters = new[] {
+            new Tuple<string, string, ImageFormat>("*.bmp;*.dib", "24-bit Bitmap", ImageFormat.Bmp),
+            new Tuple<string, string, ImageFormat>("*.gif", "GIF", ImageFormat.Gif),
+            new Tuple<string, string, ImageFormat>("*.jpg;*.jpeg;*.jfif", "JPEG", ImageFormat.Jpeg),
+            new Tuple<string, string, ImageFormat>("*.png", "PNG", ImageFormat.Png),
+            new Tuple<string, string, ImageFormat>("*.tif;*.tiff", "TIFF", ImageFormat.Tiff)
+        };
+
         private readonly Dictionary<int, int> _indexGuesses = new Dictionary<int, int>();
         private string _indexGuessesFilename;
         private Stream _currentStream;
@@ -34,6 +45,8 @@ namespace IFSExplorer
         public MainForm()
         {
             InitializeComponent();
+
+            saveFileDialog.Filter = string.Join("|", SaveFilters.Select(kvp => string.Format("{1} ({0})|{0}", kvp.Item1, kvp.Item2)));
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -84,7 +97,6 @@ namespace IFSExplorer
 
         private void browseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            openFileDialog.InitialDirectory = @"C:\LDJ\data\graphic";
             var dialogResult = openFileDialog.ShowDialog();
 
             if (dialogResult != DialogResult.OK) {
@@ -107,12 +119,39 @@ namespace IFSExplorer
 
         private void saveSelectedImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (_currentRaw == null) {
+                MessageBox.Show(
+                    Resources
+                        .MainForm_saveSelectedImageToolStripMenuItem_Click_Open_an_IFS_file_and_select_a_valid_image_first_,
+                    Resources.MainForm_Bemani_IFS_Explorer,
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
 
+            var dialogResult = saveFileDialog.ShowDialog();
+
+            if (dialogResult != DialogResult.OK) {
+                return;
+            }
+
+            using (var bitmap = DrawToBitmap()) {
+                var saveFilter = SaveFilters[saveFileDialog.FilterIndex - 1];
+                var fileName = saveFileDialog.FileName;
+                if (fileName.IndexOf('.') == -1) {
+                    fileName += string.Format(".{0}", saveFilter.Item1.Split(';')[0]);
+                }
+                bitmap.Save(fileName, saveFilter.Item3);
+            }
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void aboutBemaniIFSExplorerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            new AboutBox().ShowDialog();
         }
 
         private void listboxImages_SelectedIndexChanged(object sender, EventArgs e)
@@ -121,25 +160,24 @@ namespace IFSExplorer
             updownIndexSelect.Value = 0;
             updownIndexSelect.Maximum = 0;
             updownIndexSelect.Enabled = true;
-            pictureboxPreview.Refresh();
-        }
+            DrawFileIndex();
 
-        private void pictureboxPreview_Paint(object sender, PaintEventArgs e)
-        {
-            var imageItem = (ImageItem) listboxImages.SelectedItem;
-
-            if (imageItem != null) {
-                DrawFileIndex(e.Graphics, imageItem.FileIndex);
-            }
         }
 
         private void updownIndexSelect_ValueChanged(object sender, EventArgs e)
         {
-            pictureboxPreview.Refresh();
+            DrawFileIndex();
         }
 
-        private void DrawFileIndex(Graphics graphics, FileIndex fileIndex)
+        private void DrawFileIndex()
         {
+            var imageItem = listboxImages.SelectedItem as ImageItem;
+            if (imageItem == null) {
+                return;
+            }
+
+            var fileIndex = imageItem.FileIndex;
+
             if (_currentFileIndex != fileIndex) {
                 _currentFileIndex = fileIndex;
                 var rawBytes = IFSUtils.DecompressLSZZ(fileIndex.Read());
@@ -176,27 +214,28 @@ namespace IFSExplorer
                                              fileIndex.EntryNumber,
                                              fileIndex.Size, _currentRaw.RawLength, index, size.Item1, size.Item2);
 
-            var colors = new Dictionary<int, SolidBrush>();
+            var oldImage = pictureboxPreview.Image;
+            pictureboxPreview.Image = DrawToBitmap();
+            if (oldImage != null) {
+                oldImage.Dispose();
+            }
+        }
 
-            try {
-                for (var y = 0; y < size.Item2; ++y) {
-                    for (var x = 0; x < size.Item1; ++x) {
-                        var argb = _currentRaw.GetARGB(index, x, y);
-                        var color = Color.FromArgb(argb);
+        private Bitmap DrawToBitmap()
+        {
+            var index = (int) updownIndexSelect.Value;
+            var size = _currentRaw.GetSize(index);
+            var bitmap = new Bitmap(size.Item1, size.Item2, PixelFormat.Format32bppArgb);
 
-                        SolidBrush brush;
-                        if (!colors.TryGetValue(argb, out brush)) {
-                            brush = new SolidBrush(color);
-                            colors[argb] = brush;
-                        }
-                        graphics.FillRectangle(brush, x, y, 1, 1);
-                    }
-                }
-            } finally {
-                foreach (var pair in colors) {
-                    pair.Value.Dispose();
+            for (var y = 0; y < size.Item2; ++y) {
+                for (var x = 0; x < size.Item1; ++x) {
+                    var argb = _currentRaw.GetARGB(index, x, y);
+                    var color = Color.FromArgb(argb);
+
+                    bitmap.SetPixel(x, y, color);
                 }
             }
+            return bitmap;
         }
 
         private class ImageItem
