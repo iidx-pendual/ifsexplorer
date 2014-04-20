@@ -164,13 +164,14 @@ namespace IFSExplorer
                     offset = 16;
                 }
 
-                var set = new SortedSet<int>();
+                // Poor woman's Set.
+                var set = new Dictionary<int, byte>();
                 for (var i = 1; i <= (int) Math.Sqrt(argbSize); ++i) {
                     if (argbSize%i != 0) {
                         continue;
                     }
-                    set.Add(i);
-                    set.Add(argbSize/i);
+                    set[i] = 0;
+                    set[argbSize/i] = 0;
                 }
 
                 var indexSize = set.Count;
@@ -178,7 +179,10 @@ namespace IFSExplorer
                 var heights = new int[indexSize];
                 var k = 0;
 
-                foreach (var i in set) {
+                var keys = new List<int>(set.Keys);
+                keys.Sort();
+
+                foreach (var i in keys) {
                     widths[k] = i;
                     heights[indexSize - k - 1] = i;
                     ++k;

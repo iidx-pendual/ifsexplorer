@@ -5,7 +5,6 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Reflection;
 using System.Windows.Forms;
-using System.Linq;
 using IFSExplorer.Properties;
 
 namespace IFSExplorer
@@ -28,12 +27,31 @@ namespace IFSExplorer
                 {906096, 10}
             };
 
-        private static readonly Tuple<string, string, ImageFormat>[] SaveFilters = new[] {
-            new Tuple<string, string, ImageFormat>("*.bmp;*.dib", "24-bit Bitmap", ImageFormat.Bmp),
-            new Tuple<string, string, ImageFormat>("*.gif", "GIF", ImageFormat.Gif),
-            new Tuple<string, string, ImageFormat>("*.jpg;*.jpeg;*.jfif", "JPEG", ImageFormat.Jpeg),
-            new Tuple<string, string, ImageFormat>("*.png", "PNG", ImageFormat.Png),
-            new Tuple<string, string, ImageFormat>("*.tif;*.tiff", "TIFF", ImageFormat.Tiff)
+        class SaveFilter
+        {
+            internal readonly string Extensions;
+            private readonly string _name;
+            internal readonly ImageFormat ImageFormat;
+
+            internal SaveFilter(string extensions, string name, ImageFormat imageFormat)
+            {
+                Extensions = extensions;
+                _name = name;
+                ImageFormat = imageFormat;
+            }
+
+            public static string ToString(SaveFilter saveFilter)
+            {
+                return string.Format("{0} ({1})|{1}", saveFilter._name, saveFilter.Extensions);
+            }
+        }
+
+        private static readonly List<SaveFilter> SaveFilters = new List<SaveFilter> {
+            new SaveFilter("*.bmp;*.dib", "24-bit Bitmap", ImageFormat.Bmp), 
+            new SaveFilter("*.gif", "GIF", ImageFormat.Gif), 
+            new SaveFilter("*.jpg;*.jpeg;*.jfif", "JPEG", ImageFormat.Jpeg), 
+            new SaveFilter("*.png", "PNG", ImageFormat.Png), 
+            new SaveFilter("*.tif;*.tiff", "TIFF", ImageFormat.Tiff), 
         };
 
         private readonly Dictionary<int, int> _indexGuesses = new Dictionary<int, int>();
@@ -46,7 +64,7 @@ namespace IFSExplorer
         {
             InitializeComponent();
 
-            saveFileDialog.Filter = string.Join("|", SaveFilters.Select(kvp => string.Format("{1} ({0})|{0}", kvp.Item1, kvp.Item2)));
+            saveFileDialog.Filter = string.Join("|", SaveFilters.ConvertAll(SaveFilter.ToString).ToArray());
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -138,9 +156,9 @@ namespace IFSExplorer
                 var saveFilter = SaveFilters[saveFileDialog.FilterIndex - 1];
                 var fileName = saveFileDialog.FileName;
                 if (fileName.IndexOf('.') == -1) {
-                    fileName += string.Format(".{0}", saveFilter.Item1.Split(';')[0]);
+                    fileName += string.Format(".{0}", saveFilter.Extensions.Split(';')[0]);
                 }
-                bitmap.Save(fileName, saveFilter.Item3);
+                bitmap.Save(fileName, saveFilter.ImageFormat);
             }
         }
 
@@ -212,7 +230,7 @@ namespace IFSExplorer
 
             labelStatus.Text = string.Format("#{0}: {1} bytes decompresses to {2} bytes (index {3} = {4}x{5})",
                                              fileIndex.EntryNumber,
-                                             fileIndex.Size, _currentRaw.RawLength, index, size.Item1, size.Item2);
+                                             fileIndex.Size, _currentRaw.RawLength, index, size.X, size.Y);
 
             var oldImage = pictureboxPreview.Image;
             pictureboxPreview.Image = DrawToBitmap();
@@ -225,10 +243,10 @@ namespace IFSExplorer
         {
             var index = (int) updownIndexSelect.Value;
             var size = _currentRaw.GetSize(index);
-            var bitmap = new Bitmap(size.Item1, size.Item2, PixelFormat.Format32bppArgb);
+            var bitmap = new Bitmap(size.X, size.Y, PixelFormat.Format32bppArgb);
 
-            for (var y = 0; y < size.Item2; ++y) {
-                for (var x = 0; x < size.Item1; ++x) {
+            for (var y = 0; y < size.Y; ++y) {
+                for (var x = 0; x < size.X; ++x) {
                     var argb = _currentRaw.GetARGB(index, x, y);
                     var color = Color.FromArgb(argb);
 

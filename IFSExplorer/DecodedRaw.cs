@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 
 namespace IFSExplorer
 {
@@ -21,9 +22,9 @@ namespace IFSExplorer
             _offset = offset;
         }
 
-        internal Tuple<int, int> GetSize(int index)
+        internal Point GetSize(int index)
         {
-            return new Tuple<int, int>(_widths[index], _heights[index]);
+            return new Point(_widths[index], _heights[index]);
         }
 
         internal int GetARGB(int index, int x, int y)
