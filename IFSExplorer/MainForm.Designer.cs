@@ -38,9 +38,9 @@
             this.saveSelectedImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutBemaniIFSExplorerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.saveFileDialog = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.pictureboxPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.updownIndexSelect)).BeginInit();
             this.menuStrip.SuspendLayout();
