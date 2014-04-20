@@ -31,10 +31,14 @@ namespace IFSExplorer
 
             using (var stream = openFileDialog.OpenFile()) {
                 var mappings = ParseIFS(stream);
+
+                foreach (var mapping in mappings) {
+                    var bytes = mapping.Read();
+                }
             }
         }
 
-        private List<FileIndex> ParseIFS(Stream stream)
+        private static IEnumerable<FileIndex> ParseIFS(Stream stream)
         {
             stream.Seek(16, SeekOrigin.Begin);
             var fHeader = ReadInt(stream);
@@ -95,7 +99,7 @@ namespace IFSExplorer
             return fileMappings;
         }
 
-        private int ReadInt(Stream stream)
+        private static int ReadInt(Stream stream)
         {
             var bytes = new byte[4];
             stream.Read(bytes, 0, 4);
@@ -108,7 +112,7 @@ namespace IFSExplorer
             return r;
         }
 
-        private bool ByteArrayEqual(byte[] a, byte[] b)
+        private static bool ByteArrayEqual(byte[] a, byte[] b)
         {
             var aLen = a.Length;
             if (aLen != b.Length) {
