@@ -52,10 +52,47 @@ namespace IFSExplorer
                 return string.Format("#{0} ({1})", _fileIndex.EntryNumber, _fileIndex.Size);
             }
 
-            internal void Draw()
+            internal void Draw(Label label, Graphics graphics)
             {
                 var rawBytes = DecompressLSZZ(_fileIndex.Read());
-                var raw = DecodeRaw(rawBytes);
+                DecodedRaw raw;
+
+                try {
+                    raw = DecodeRaw(rawBytes);
+                } catch (Exception e) {
+                    label.Text = string.Format("Couldn't decode raw #{0}: {1}", _fileIndex.EntryNumber, e);
+                    return;
+                }
+
+                label.Text = string.Format("#{0}: {1} bytes decompresses to {2} bytes", _fileIndex.EntryNumber,
+                                           _fileIndex.Size, rawBytes.Length);
+
+                var index = raw.IndexSize / 2;
+                var size = raw.GetSize(index);
+
+                for (var y = 0; y < size.Item2; ++y) {
+                    
+                for (var x = 0; x < size.Item1; ++x) {
+                    int argb = raw.GetARGB(index, x, y);
+                    var color = Color.FromArgb(argb);
+                    var solidBrush = new SolidBrush(color);
+                    graphics.FillRectangle(solidBrush, x, y, 1, 1);
+                }
+                }
+            }
+        }
+
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            pictureBox1.Refresh();
+        }
+
+        private void pictureBox1_Paint(object sender, PaintEventArgs e)
+        {
+            var imageItem = (ImageItem) listBox1.SelectedItem;
+
+            if (imageItem != null) {
+                imageItem.Draw(label1, e.Graphics);
             }
         }
 
@@ -74,7 +111,7 @@ namespace IFSExplorer
 
             var packet = new byte[4];
             var zeroPadArray = new byte[] {0, 0, 0, 0};
-            var separator = new byte[4] {0, 0, 0, 0};
+            var separator = new byte[] {0, 0, 0, 0};
             var sepInit = false;
             var zeroPad = false;
             var entryNumber = 0;
@@ -217,7 +254,7 @@ namespace IFSExplorer
                     offset = 16;
                 }
 
-                var set = new HashSet<int>();
+                var set = new SortedSet<int>();
                 for (var i = 1; i <= (int) Math.Sqrt(argbSize); ++i) {
                     if (argbSize%i != 0) {
                         continue;
@@ -275,17 +312,29 @@ namespace IFSExplorer
 
     internal class DecodedRaw
     {
-        private int _offset;
-        private int[] _argbArr;
-        private int[] _widths;
-        private int[] _heights;
+        private readonly int _offset;
+        private readonly int[] _argbArr;
+        private readonly int[] _widths;
+        private readonly int[] _heights;
 
-        public DecodedRaw(int offset, int[] argbArr, int[] widths, int[] heights)
+        internal int IndexSize { get { return _widths.Length; } }
+
+        internal DecodedRaw(int offset, int[] argbArr, int[] widths, int[] heights)
         {
             _heights = heights;
             _widths = widths;
             _argbArr = argbArr;
             _offset = offset;
+        }
+
+        internal Tuple<int, int> GetSize(int index)
+        {
+            return new Tuple<int, int>(_widths[index], _heights[index]);
+        }
+
+        internal int GetARGB(int index, int x, int y)
+        {
+            return _argbArr[(y*_widths[index]) + x + _offset];
         }
     }
 
