@@ -34,16 +34,89 @@ namespace IFSExplorer
 
                 foreach (var mapping in mappings) {
                     var bytes = mapping.Read();
+                    var raw = DecompressLSZZ(bytes);
+                    Debug.WriteLine("{0} bytes decompressed to {1}", bytes.Length, raw.Length);
                 }
+            }
+        }
+
+        private static byte[] DecompressLSZZ(byte[] bytes)
+        {
+            using (MemoryStream inStream = new MemoryStream(bytes),
+                                outStream = new MemoryStream(bytes.Length*2)) {
+                inStream.Seek(8, SeekOrigin.Begin);
+
+                var ctrlLen = 0;
+                var ctrl = 0;
+                var dect = new List<int>();
+
+                int data;
+                while ((data = inStream.ReadByte()) != -1) {
+                    if (ctrlLen == 0) {
+                        ctrl = data;
+                        ctrlLen = 8;
+                        continue;
+                    }
+
+                    if ((ctrl & 0x01) == 0x01) {
+                        outStream.WriteByte((byte) data);
+                        dect.Add(data);
+                        ctrl = ctrl >> 1;
+                        --ctrlLen;
+                        continue;
+                    }
+
+                    var cmd0 = data;
+                    var cmd1 = inStream.ReadByte();
+
+                    if (cmd1 == -1) {
+                        break;
+                    }
+
+                    var chLen = (cmd1 & 0x0f) + 3;
+                    var chOff = ((cmd0 & 0xff) << 4) | ((cmd1 & 0xf0) >> 4);
+                    var index = dect.Count - chOff;
+
+                    var dest = new List<int>();
+                    for (var i = 0; i < chLen; ++i, ++index) {
+                        if (index >= dect.Count) {
+                            if (chOff == 0) {
+                                break;
+                            }
+                            index = dect.Count - chOff;
+                        }
+                        if (index < 0) {
+                            outStream.WriteByte(0x00);
+                            dest.Add(0);
+                        } else {
+                            var decVal = dect[index];
+                            outStream.WriteByte((byte) decVal);
+                            dest.Add(decVal);
+                        }
+                    }
+
+                    dect.AddRange(dest);
+                    dest.Clear();
+
+                    const int decSize = 0x1000;
+                    if (dect.Count >= decSize) {
+                        dect.RemoveRange(0, dect.Count - decSize + 1);
+                    }
+
+                    ctrl = ctrl >> 1;
+                    --ctrlLen;
+                }
+
+                return outStream.ToArray();
             }
         }
 
         private static IEnumerable<FileIndex> ParseIFS(Stream stream)
         {
             stream.Seek(16, SeekOrigin.Begin);
-            var fHeader = ReadInt(stream);
-            stream.Seek(40, SeekOrigin.Begin);
             var fIndex = ReadInt(stream);
+            stream.Seek(40, SeekOrigin.Begin);
+            var fHeader = ReadInt(stream);
 
             stream.Seek(fHeader + 72, SeekOrigin.Begin);
 
