@@ -6,9 +6,9 @@ using System.Windows.Forms;
 
 namespace IFSExplorer
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
@@ -18,7 +18,7 @@ namespace IFSExplorer
             openFileDialog.InitialDirectory = @"C:\LDJ\data\graphic";
             openFileDialog.DefaultExt = "ifs";
             var dialogResult = openFileDialog.ShowDialog();
-            listBox1.Items.Clear();
+            listboxImages.Items.Clear();
 
             if (dialogResult != DialogResult.OK) {
                 return;
@@ -28,7 +28,7 @@ namespace IFSExplorer
             var mappings = ParseIFS(stream);
 
             foreach (var mapping in mappings) {
-                listBox1.Items.Add(new ImageItem(mapping));
+                listboxImages.Items.Add(new ImageItem(mapping));
             }
         }
 
@@ -95,18 +95,19 @@ namespace IFSExplorer
 
         private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            numericUpDown1.Minimum = 0;
-            numericUpDown1.Value = 0;
-            numericUpDown1.Maximum = 0;
-            pictureBox1.Refresh();
+            updownIndexSelect.Minimum = 0;
+            updownIndexSelect.Value = 0;
+            updownIndexSelect.Maximum = 0;
+            updownIndexSelect.Visible = true;
+            pictureboxPreview.Refresh();
         }
 
         private void pictureBox1_Paint(object sender, PaintEventArgs e)
         {
-            var imageItem = (ImageItem) listBox1.SelectedItem;
+            var imageItem = (ImageItem) listboxImages.SelectedItem;
 
             if (imageItem != null) {
-                imageItem.Draw(numericUpDown1, label1, e.Graphics);
+                imageItem.Draw(updownIndexSelect, labelStatus, e.Graphics);
             }
         }
 
@@ -325,59 +326,7 @@ namespace IFSExplorer
 
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            pictureBox1.Refresh();
-        }
-    }
-
-    internal class DecodedRaw
-    {
-        private readonly int _offset;
-        private readonly int[] _argbArr;
-        private readonly int[] _widths;
-        private readonly int[] _heights;
-
-        internal int IndexSize { get { return _widths.Length; } }
-
-        internal DecodedRaw(int offset, int[] argbArr, int[] widths, int[] heights)
-        {
-            _heights = heights;
-            _widths = widths;
-            _argbArr = argbArr;
-            _offset = offset;
-        }
-
-        internal Tuple<int, int> GetSize(int index)
-        {
-            return new Tuple<int, int>(_widths[index], _heights[index]);
-        }
-
-        internal int GetARGB(int index, int x, int y)
-        {
-            return _argbArr[(y*_widths[index]) + x + _offset];
-        }
-    }
-
-    internal class FileIndex {
-        private readonly Stream _stream;
-
-        private readonly int _index;
-        internal readonly int Size;
-        internal readonly int EntryNumber;
-
-        internal FileIndex(Stream stream, int index, int size, int entryNumber)
-        {
-            _stream = stream;
-            EntryNumber = entryNumber;
-            Size = size;
-            _index = index;
-        }
-
-        internal byte[] Read()
-        {
-            _stream.Seek(_index, SeekOrigin.Begin);
-            var r = new byte[Size];
-            _stream.Read(r, 0, Size);
-            return r;
+            pictureboxPreview.Refresh();
         }
     }
 }
