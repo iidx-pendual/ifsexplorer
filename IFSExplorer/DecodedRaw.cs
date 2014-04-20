@@ -4,6 +4,7 @@ namespace IFSExplorer
 {
     internal class DecodedRaw
     {
+        internal readonly int RawLength;
         private readonly int _offset;
         private readonly int[] _argbArr;
         private readonly int[] _widths;
@@ -11,8 +12,9 @@ namespace IFSExplorer
 
         internal int IndexSize { get { return _widths.Length; } }
 
-        internal DecodedRaw(int offset, int[] argbArr, int[] widths, int[] heights)
+        internal DecodedRaw(int rawLength, int offset, int[] argbArr, int[] widths, int[] heights)
         {
+            RawLength = rawLength;
             _heights = heights;
             _widths = widths;
             _argbArr = argbArr;

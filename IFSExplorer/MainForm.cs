@@ -27,6 +27,9 @@ namespace IFSExplorer
 
         private readonly Dictionary<int, int> _indexGuesses = new Dictionary<int, int>();
         private string _indexGuessesFilename;
+        private Stream _currentStream;
+        private FileIndex _currentFileIndex;
+        private DecodedRaw _currentRaw;
 
         public MainForm()
         {
@@ -79,23 +82,37 @@ namespace IFSExplorer
             }
         }
 
-        private void buttonBrowse_Click(object sender, EventArgs e)
+        private void browseToolStripMenuItem_Click(object sender, EventArgs e)
         {
             openFileDialog.InitialDirectory = @"C:\LDJ\data\graphic";
-            openFileDialog.DefaultExt = "ifs";
             var dialogResult = openFileDialog.ShowDialog();
-            listboxImages.Items.Clear();
 
             if (dialogResult != DialogResult.OK) {
                 return;
             }
 
-            var stream = openFileDialog.OpenFile();
-            var mappings = IFSUtils.ParseIFS(stream);
+            listboxImages.Items.Clear();
+
+            if (_currentStream != null) {
+                _currentStream.Close();
+            }
+
+            _currentStream = openFileDialog.OpenFile();
+            var mappings = IFSUtils.ParseIFS(_currentStream);
 
             foreach (var mapping in mappings) {
                 listboxImages.Items.Add(new ImageItem(mapping));
             }
+        }
+
+        private void saveSelectedImageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
         }
 
         private void listboxImages_SelectedIndexChanged(object sender, EventArgs e)
@@ -103,7 +120,7 @@ namespace IFSExplorer
             updownIndexSelect.Minimum = 0;
             updownIndexSelect.Value = 0;
             updownIndexSelect.Maximum = 0;
-            updownIndexSelect.Visible = true;
+            updownIndexSelect.Enabled = true;
             pictureboxPreview.Refresh();
         }
 
@@ -123,43 +140,48 @@ namespace IFSExplorer
 
         private void DrawFileIndex(Graphics graphics, FileIndex fileIndex)
         {
-            var rawBytes = IFSUtils.DecompressLSZZ(fileIndex.Read());
-            DecodedRaw raw;
+            if (_currentFileIndex != fileIndex) {
+                _currentFileIndex = fileIndex;
+                var rawBytes = IFSUtils.DecompressLSZZ(fileIndex.Read());
 
-            try {
-                raw = IFSUtils.DecodeRaw(rawBytes);
-            } catch (Exception e) {
-                labelStatus.Text = string.Format("Couldn't decode raw #{0}: {1}", fileIndex.EntryNumber, e);
+                try {
+                    _currentRaw = IFSUtils.DecodeRaw(rawBytes);
+                } catch (Exception e) {
+                    _currentRaw = null;
+                    labelStatus.Text = string.Format("Couldn't decode raw #{0}: {1}", fileIndex.EntryNumber, e);
+                    return;
+                }
+            }
+
+            if (_currentRaw == null) {
                 return;
             }
 
-            var rawBytesLength = rawBytes.Length;
-
             if (updownIndexSelect.Value == 0) {
-                updownIndexSelect.Maximum = raw.IndexSize - 1;
+                updownIndexSelect.Maximum = _currentRaw.IndexSize - 1;
 
                 int indexGuess;
-                if (!_indexGuesses.TryGetValue(rawBytesLength, out indexGuess)) {
-                    indexGuess = (int) (((decimal) raw.IndexSize)/2);
+                if (!_indexGuesses.TryGetValue(_currentRaw.RawLength, out indexGuess)) {
+                    indexGuess = (int) (((decimal) _currentRaw.IndexSize)/2);
                 }
                 updownIndexSelect.Value = indexGuess;
             }
 
             var index = (int) updownIndexSelect.Value;
-            _indexGuesses[rawBytesLength] = index;
+            _indexGuesses[_currentRaw.RawLength] = index;
 
-            var size = raw.GetSize(index);
+            var size = _currentRaw.GetSize(index);
 
             labelStatus.Text = string.Format("#{0}: {1} bytes decompresses to {2} bytes (index {3} = {4}x{5})",
                                              fileIndex.EntryNumber,
-                                             fileIndex.Size, rawBytesLength, index, size.Item1, size.Item2);
+                                             fileIndex.Size, _currentRaw.RawLength, index, size.Item1, size.Item2);
 
             var colors = new Dictionary<int, SolidBrush>();
 
             try {
                 for (var y = 0; y < size.Item2; ++y) {
                     for (var x = 0; x < size.Item1; ++x) {
-                        var argb = raw.GetARGB(index, x, y);
+                        var argb = _currentRaw.GetARGB(index, x, y);
                         var color = Color.FromArgb(argb);
 
                         SolidBrush brush;

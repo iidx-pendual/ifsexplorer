@@ -184,7 +184,7 @@ namespace IFSExplorer
                     ++k;
                 }
 
-                return new DecodedRaw(offset, argbArr, widths, heights);
+                return new DecodedRaw(raw.Length, offset, argbArr, widths, heights);
             }
         }
 
