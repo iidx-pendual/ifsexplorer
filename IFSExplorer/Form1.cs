@@ -24,20 +24,102 @@ namespace IFSExplorer
             openFileDialog.InitialDirectory = @"C:\LDJ\data\graphic";
             openFileDialog.DefaultExt = "ifs";
             var dialogResult = openFileDialog.ShowDialog();
+            listBox1.Items.Clear();
 
             if (dialogResult != DialogResult.OK) {
                 return;
             }
 
-            using (var stream = openFileDialog.OpenFile()) {
-                var mappings = ParseIFS(stream);
+            var stream = openFileDialog.OpenFile();
+            var mappings = ParseIFS(stream);
 
-                foreach (var mapping in mappings) {
-                    var bytes = mapping.Read();
-                    var raw = DecompressLSZZ(bytes);
-                    Debug.WriteLine("{0} bytes decompressed to {1}", bytes.Length, raw.Length);
+            foreach (var mapping in mappings) {
+                listBox1.Items.Add(new ImageItem(mapping));
+            }
+        }
+
+        private class ImageItem
+        {
+            private readonly FileIndex _fileIndex;
+
+            internal ImageItem(FileIndex fileIndex)
+            {
+                _fileIndex = fileIndex;
+            }
+
+            public override string ToString()
+            {
+                return string.Format("#{0} ({1})", _fileIndex.EntryNumber, _fileIndex.Size);
+            }
+
+            internal void Draw()
+            {
+                var rawBytes = DecompressLSZZ(_fileIndex.Read());
+                var raw = DecodeRaw(rawBytes);
+            }
+        }
+
+        private static IEnumerable<FileIndex> ParseIFS(Stream stream)
+        {
+            stream.Seek(16, SeekOrigin.Begin);
+            var fIndex = ReadInt(stream);
+            stream.Seek(40, SeekOrigin.Begin);
+            var fHeader = ReadInt(stream);
+
+            if (fHeader%4 != 0) {
+                throw new ArgumentException("fHeader%4 != 0");
+            }
+
+            stream.Seek(fHeader + 72, SeekOrigin.Begin);
+
+            var packet = new byte[4];
+            var zeroPadArray = new byte[] {0, 0, 0, 0};
+            var separator = new byte[4] {0, 0, 0, 0};
+            var sepInit = false;
+            var zeroPad = false;
+            var entryNumber = 0;
+
+            var fileMappings = new List<FileIndex>();
+
+            while (stream.Position < fIndex) {
+                stream.Read(packet, 0, 4);
+
+                if (stream.Position >= fIndex) {
+                    break;
+                }
+
+                if (!sepInit || ByteArrayEqual(separator, zeroPadArray)) {
+                    if (!ByteArrayEqual(packet, zeroPadArray)) {
+                        packet.CopyTo(separator, 0);
+                        sepInit = true;
+                        continue;
+                    }
+                } else {
+                    if (separator[0] == packet[0]) {
+                        continue;
+                    }
+
+                    if (ByteArrayEqual(packet, zeroPadArray)) {
+                        if (zeroPad) {
+                            continue;
+                        }
+                        zeroPad = true;
+                    }
+                }
+
+                var index = ReadInt(packet);
+
+                if (stream.Position >= fIndex) {
+                    break;
+                }
+
+                var size = ReadInt(stream);
+                if (size > 0) {
+                    fileMappings.Add(new FileIndex(stream, fIndex + index, size, entryNumber++));
                 }
             }
+
+            return fileMappings;
         }
 
         private static byte[] DecompressLSZZ(byte[] bytes)
@@ -111,75 +193,66 @@ namespace IFSExplorer
             }
         }
 
-        private static IEnumerable<FileIndex> ParseIFS(Stream stream)
+        private static DecodedRaw DecodeRaw(byte[] raw)
         {
-            stream.Seek(16, SeekOrigin.Begin);
-            var fIndex = ReadInt(stream);
-            stream.Seek(40, SeekOrigin.Begin);
-            var fHeader = ReadInt(stream);
+            var fileSize = raw.Length;
 
-            stream.Seek(fHeader + 72, SeekOrigin.Begin);
-
-            var packet = new byte[4];
-            var zeroPadArray = new byte[] {0, 0, 0, 0};
-            var separator = new byte[4];
-            var sepInit = false;
-            var zeroPad = false;
-            var entryNumber = 0;
-
-            var fileMappings = new List<FileIndex>();
-
-            while (stream.Position < fIndex) {
-                stream.Read(packet, 0, 4);
-
-                if (stream.Position >= fIndex) {
-                    break;
-                }
-
-                if (!sepInit || ByteArrayEqual(separator, zeroPadArray)) {
-                    if (!ByteArrayEqual(packet, zeroPadArray)) {
-                        packet.CopyTo(separator, 0);
-                        sepInit = true;
-                        continue;
-                    }
-                } else {
-                    if (separator[0] == packet[0]) {
-                        continue;
-                    }
-
-                    if (ByteArrayEqual(packet, zeroPadArray)) {
-                        if (zeroPad) {
-                            continue;
-                        }
-                        zeroPad = true;
-                    }
-                }
-
-                var index = ReadInt(stream);
-
-                stream.Read(packet, 0, 4);
-
-                if (stream.Position >= fIndex) {
-                    break;
-                }
-
-                var size = ReadInt(stream);
-                if (size > 0) {
-                    fileMappings.Add(new FileIndex(stream, fIndex + index, size, entryNumber++));
-                }
+            if (fileSize == 0 || (fileSize%4) != 0) {
+                throw new ArgumentException("raw");
             }
 
-            return fileMappings;
+            var argbSize = fileSize >> 2;
+            var argbArr = new int[argbSize];
+
+            using (var stream = new MemoryStream(raw)) {
+                var data = new byte[4];
+                var index = 0;
+                while (stream.Read(data, 0, 4) == 4) {
+                    argbArr[index++] = (data[3] << 24) | (data[2] << 16) | (data[1] << 8) | data[0];
+                }
+
+                var offset = 0;
+                if (argbArr[0] == 0x54584454) {
+                    // XXX: or 0x54445854?
+                    offset = 16;
+                }
+
+                var set = new HashSet<int>();
+                for (var i = 1; i <= (int) Math.Sqrt(argbSize); ++i) {
+                    if (argbSize%i != 0) {
+                        continue;
+                    }
+                    set.Add(i);
+                    set.Add(argbSize/i);
+                }
+
+                var indexSize = set.Count;
+                var widths = new int[indexSize];
+                var heights = new int[indexSize];
+                var k = 0;
+
+                foreach (var i in set) {
+                    widths[k] = i;
+                    heights[indexSize - k - 1] = i;
+                    ++k;
+                }
+
+                return new DecodedRaw(offset, argbArr, widths, heights);
+            }
         }
 
         private static int ReadInt(Stream stream)
         {
             var bytes = new byte[4];
             stream.Read(bytes, 0, 4);
+            return ReadInt(bytes);
+        }
 
+        private static int ReadInt(byte[] bytes)
+        {
             var r = 0;
             for (var i = 0; i < 4; ++i) {
-                r = (r << 8) | bytes[i];
+                r = (r << 8) + bytes[i];
             }
 
             return r;
@@ -200,28 +273,42 @@ namespace IFSExplorer
         }
     }
 
+    internal class DecodedRaw
+    {
+        private int _offset;
+        private int[] _argbArr;
+        private int[] _widths;
+        private int[] _heights;
+
+        public DecodedRaw(int offset, int[] argbArr, int[] widths, int[] heights)
+        {
+            _heights = heights;
+            _widths = widths;
+            _argbArr = argbArr;
+            _offset = offset;
+        }
+    }
+
     internal class FileIndex {
         private readonly Stream _stream;
 
         private readonly int _index;
-        private readonly int _size;
+        internal readonly int Size;
         internal readonly int EntryNumber;
 
         internal FileIndex(Stream stream, int index, int size, int entryNumber)
         {
             _stream = stream;
             EntryNumber = entryNumber;
-            _size = size;
+            Size = size;
             _index = index;
         }
 
-        internal byte[] Read(Stream stream = null)
+        internal byte[] Read()
         {
-            stream = stream ?? _stream;
-
-            stream.Seek(_index, SeekOrigin.Begin);
-            var r = new byte[_size];
-            stream.Read(r, 0, _size);
+            _stream.Seek(_index, SeekOrigin.Begin);
+            var r = new byte[Size];
+            _stream.Read(r, 0, Size);
             return r;
         }
     }

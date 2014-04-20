@@ -29,6 +29,7 @@
         {
             this.buttonBrowse = new System.Windows.Forms.Button();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+            this.listBox1 = new System.Windows.Forms.ListBox();
             this.SuspendLayout();
             // 
             // buttonBrowse
@@ -45,11 +46,20 @@
             // 
             this.openFileDialog.FileName = "openFileDialog";
             // 
+            // listBox1
+            // 
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.Location = new System.Drawing.Point(12, 41);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.Size = new System.Drawing.Size(131, 225);
+            this.listBox1.TabIndex = 1;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(679, 280);
+            this.Controls.Add(this.listBox1);
             this.Controls.Add(this.buttonBrowse);
             this.Name = "Form1";
             this.Text = "Form1";
@@ -61,6 +71,7 @@
 
         private System.Windows.Forms.Button buttonBrowse;
         private System.Windows.Forms.OpenFileDialog openFileDialog;
+        private System.Windows.Forms.ListBox listBox1;
     }
 }
 
