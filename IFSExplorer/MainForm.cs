@@ -98,7 +98,7 @@ namespace IFSExplorer
             }
         }
 
-        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        private void listboxImages_SelectedIndexChanged(object sender, EventArgs e)
         {
             updownIndexSelect.Minimum = 0;
             updownIndexSelect.Value = 0;
@@ -107,21 +107,21 @@ namespace IFSExplorer
             pictureboxPreview.Refresh();
         }
 
-        private void pictureBox1_Paint(object sender, PaintEventArgs e)
+        private void pictureboxPreview_Paint(object sender, PaintEventArgs e)
         {
             var imageItem = (ImageItem) listboxImages.SelectedItem;
 
             if (imageItem != null) {
-                Draw(e.Graphics, imageItem.FileIndex);
+                DrawFileIndex(e.Graphics, imageItem.FileIndex);
             }
         }
 
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        private void updownIndexSelect_ValueChanged(object sender, EventArgs e)
         {
             pictureboxPreview.Refresh();
         }
 
-        private void Draw(Graphics graphics, FileIndex fileIndex)
+        private void DrawFileIndex(Graphics graphics, FileIndex fileIndex)
         {
             var rawBytes = IFSUtils.DecompressLSZZ(fileIndex.Read());
             DecodedRaw raw;

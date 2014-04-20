@@ -33,6 +33,7 @@
             this.pictureboxPreview = new System.Windows.Forms.PictureBox();
             this.labelStatus = new System.Windows.Forms.Label();
             this.updownIndexSelect = new System.Windows.Forms.NumericUpDown();
+            this.button1 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureboxPreview)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.updownIndexSelect)).BeginInit();
             this.SuspendLayout();
@@ -60,7 +61,7 @@
             this.listboxImages.Name = "listboxImages";
             this.listboxImages.Size = new System.Drawing.Size(131, 225);
             this.listboxImages.TabIndex = 1;
-            this.listboxImages.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
+            this.listboxImages.SelectedIndexChanged += new System.EventHandler(this.listboxImages_SelectedIndexChanged);
             // 
             // pictureboxPreview
             // 
@@ -72,7 +73,7 @@
             this.pictureboxPreview.Size = new System.Drawing.Size(518, 227);
             this.pictureboxPreview.TabIndex = 3;
             this.pictureboxPreview.TabStop = false;
-            this.pictureboxPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureBox1_Paint);
+            this.pictureboxPreview.Paint += new System.Windows.Forms.PaintEventHandler(this.pictureboxPreview_Paint);
             // 
             // labelStatus
             // 
@@ -90,13 +91,23 @@
             this.updownIndexSelect.Size = new System.Drawing.Size(65, 20);
             this.updownIndexSelect.TabIndex = 5;
             this.updownIndexSelect.Visible = false;
-            this.updownIndexSelect.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
+            this.updownIndexSelect.ValueChanged += new System.EventHandler(this.updownIndexSelect_ValueChanged);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(12, 243);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 6;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(679, 280);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.updownIndexSelect);
             this.Controls.Add(this.labelStatus);
             this.Controls.Add(this.pictureboxPreview);
@@ -122,6 +133,7 @@
         private System.Windows.Forms.PictureBox pictureboxPreview;
         private System.Windows.Forms.Label labelStatus;
         private System.Windows.Forms.NumericUpDown updownIndexSelect;
+        private System.Windows.Forms.Button button1;
     }
 }
 
