@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace IFSExplorer
 {
@@ -191,14 +188,14 @@ namespace IFSExplorer
             }
         }
 
-        internal static int ReadInt(Stream stream)
+        private static int ReadInt(Stream stream)
         {
             var bytes = new byte[4];
             stream.Read(bytes, 0, 4);
             return ReadInt(bytes);
         }
 
-        internal static int ReadInt(byte[] bytes)
+        private static int ReadInt(byte[] bytes)
         {
             var r = 0;
             for (var i = 0; i < 4; ++i) {
@@ -208,7 +205,7 @@ namespace IFSExplorer
             return r;
         }
 
-        internal static bool ByteArrayEqual(byte[] a, byte[] b)
+        private static bool ByteArrayEqual(byte[] a, byte[] b)
         {
             var aLen = a.Length;
             if (aLen != b.Length) {
