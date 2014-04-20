@@ -102,8 +102,11 @@
             this.Controls.Add(this.pictureboxPreview);
             this.Controls.Add(this.listboxImages);
             this.Controls.Add(this.buttonBrowse);
+            this.DoubleBuffered = true;
             this.Name = "MainForm";
             this.Text = "Bemani IFS Extractor";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.pictureboxPreview)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.updownIndexSelect)).EndInit();
             this.ResumeLayout(false);
